@@ -2,7 +2,7 @@
 name = "koryto"
 version = "0.0.1"
 edition = "2021"
-description = "game loop + coroutine + burrito = blazingly synchronous async executor for games"
+description = "🎮 game loop + coroutine + 🌯 burrito = 🚀🔥 blazingly synchronous async executor for games 🔥🚀"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
