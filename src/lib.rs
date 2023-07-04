@@ -72,22 +72,22 @@ mod tests {
     use super::*;
 
     #[test]
-fn it_works() {
-    let mut ko = Koryto::new();
+    fn it_works() {
+        let mut ko = Koryto::new();
 
-    let val = Rc::new(RefCell::new(3));
-    let val_inner = val.clone();
+        let val = Rc::new(RefCell::new(3));
+        let val_inner = val.clone();
 
-    ko.start(async move {
-        *val_inner.borrow_mut() += 2;
-        yield_frame().await;
-        *val_inner.borrow_mut() += 2;
-    });
+        ko.start(async move {
+            *val_inner.borrow_mut() += 2;
+            yield_frame().await;
+            *val_inner.borrow_mut() += 2;
+        });
 
-    assert_eq!(*val.borrow(), 3);
-    ko.poll_coroutines(1.0);
-    assert_eq!(*val.borrow(), 5);
-    ko.poll_coroutines(1.0);
-    assert_eq!(*val.borrow(), 7);
-}
+        assert_eq!(*val.borrow(), 3);
+        ko.poll_coroutines(1.0);
+        assert_eq!(*val.borrow(), 5);
+        ko.poll_coroutines(1.0);
+        assert_eq!(*val.borrow(), 7);
+    }
 }
