@@ -59,9 +59,10 @@ mod tests {
 
         ko.start(async move {
             *val_inner.borrow_mut() += 2;
-            println!("foo!");
         });
 
+        assert_eq!(*val.borrow(), 3);
+        ko.poll_coroutines(1.0);
         assert_eq!(*val.borrow(), 5);
     }
 }
