@@ -1,18 +1,10 @@
 #![allow(clippy::new_without_default)]
 
 use core::future::Future;
-use std::{pin::Pin, sync::Arc};
-
-use futures::task::{ArcWake, waker_ref};
+use std::pin::Pin;
 
 pub struct Coroutine {
-    pub future: Pin<Arc<dyn Future<Output = ()> + 'static + Send + Sync>>
-}
-
-impl ArcWake for Coroutine {
-    fn wake_by_ref(_arc_self: &std::sync::Arc<Self>) {
-        // TODO: nothing for now
-    }
+    pub future: Pin<Box<dyn Future<Output = ()> + 'static>>
 }
 
 pub struct Koryto {
@@ -24,8 +16,8 @@ impl Koryto {
         Self { coroutines: Vec::new() }
     }
 
-    pub fn start(&mut self, co: impl Future<Output = ()> + 'static + Send + Sync) {
-        self.coroutines.push(Coroutine { future: Arc::pin(co) });
+    pub fn start(&mut self, co: impl Future<Output = ()> + 'static) {
+        self.coroutines.push(Coroutine { future: Box::pin(co) });
     }
 
     pub fn poll_coroutines(&mut self, delta: f32) {
