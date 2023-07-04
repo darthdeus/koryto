@@ -23,3 +23,5 @@ convenient for games. [Macroquad's
 coroutines](https://docs.rs/macroquad/latest/macroquad/experimental/coroutines/index.html)
 are more closely aligned with the philosophy of this crate. If you like
 `cosync`, keep using it!
+
+One benefit of `koryto` over `cosync` is that it does not assume coroutines are `Sync`.

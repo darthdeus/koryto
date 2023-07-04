@@ -78,9 +78,14 @@ mod tests {
         let val = Rc::new(RefCell::new(3));
         let val_inner = val.clone();
 
+        // Koryto doesn't require Send/Sync, so coroutines can
+        // work with raw pointers without a mutex.
+        let p: *const i32 = std::ptr::null();
+
         ko.start(async move {
             *val_inner.borrow_mut() += 2;
             yield_frame().await;
+            println!("happy pointer 🐷 = {:?}", p);
             *val_inner.borrow_mut() += 2;
         });
 

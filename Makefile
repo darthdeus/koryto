@@ -1,4 +1,4 @@
 .PHONY: default
 
 default:
-	cargo test
+	cargo test -- --nocapture
