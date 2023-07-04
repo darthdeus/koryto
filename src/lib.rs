@@ -1,10 +1,13 @@
 #![allow(clippy::new_without_default)]
 
 use core::future::Future;
-use std::{pin::Pin, task::{RawWaker, RawWakerVTable, Waker, Poll}};
+use std::{
+    pin::Pin,
+    task::{Poll, RawWaker, RawWakerVTable, Waker},
+};
 
 pub struct Coroutine {
-    pub future: Pin<Box<dyn Future<Output = ()> + 'static>>
+    pub future: Pin<Box<dyn Future<Output = ()> + 'static>>,
 }
 
 pub struct Koryto {
@@ -42,16 +45,20 @@ fn make_waker_vtable() -> RawWaker {
 
     static VTABLE: RawWakerVTable = RawWakerVTable::new(clone, wake, wake_by_ref, drop);
 
-     RawWaker::new(std::ptr::null(), &VTABLE)
+    RawWaker::new(std::ptr::null(), &VTABLE)
 }
 
 impl Koryto {
     pub fn new() -> Self {
-        Self { coroutines: Vec::new() }
+        Self {
+            coroutines: Vec::new(),
+        }
     }
 
     pub fn start(&mut self, co: impl Future<Output = ()> + 'static) {
-        self.coroutines.push(Coroutine { future: Box::pin(co) });
+        self.coroutines.push(Coroutine {
+            future: Box::pin(co),
+        });
     }
 
     pub fn poll_coroutines(&mut self, _delta: f32) {
@@ -59,15 +66,14 @@ impl Koryto {
         let waker = unsafe { Waker::from_raw(raw_waker) };
         let mut context = std::task::Context::from_waker(&waker);
 
-        self.coroutines.retain_mut(|co| {
-            !co.future.as_mut().poll(&mut context).is_ready()
-        });
+        self.coroutines
+            .retain_mut(|co| !co.future.as_mut().poll(&mut context).is_ready());
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{rc::Rc, cell::RefCell};
+    use std::{cell::RefCell, rc::Rc};
 
     use super::*;
 
