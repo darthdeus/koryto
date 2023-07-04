@@ -1,15 +1,30 @@
 #![allow(clippy::new_without_default)]
 
 use core::future::Future;
+use std::pin::Pin;
 
-pub struct Koryto {}
+pub struct Coroutine {
+    pub future: Pin<Box<dyn Future<Output = ()>>>
+}
+
+pub struct Koryto {
+    pub coroutines: Vec<Coroutine>,
+}
 
 impl Koryto {
     pub fn new() -> Self {
-        Self {}
+        Self { coroutines: Vec::new() }
     }
 
-    pub fn start(&mut self, _co: impl Future<Output = ()>) {}
+    pub fn start(&mut self, co: impl Future<Output = ()> + 'static) {
+        self.coroutines.push(Coroutine { future: Box::pin(co) });
+    }
+
+    pub fn poll_coroutines(&mut self, delta: f32) {
+        for co in self.coroutines.iter_mut() {
+            todo!();
+        }
+    }
 }
 
 #[cfg(test)]
