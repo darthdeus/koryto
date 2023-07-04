@@ -3,7 +3,7 @@
 use core::future::Future;
 use std::{
     pin::Pin,
-    task::{Poll, RawWaker, RawWakerVTable, Waker},
+    task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
 pub struct Coroutine {
@@ -48,6 +48,17 @@ fn make_waker_vtable() -> RawWaker {
     RawWaker::new(std::ptr::null(), &VTABLE)
 }
 
+fn resume<T>(future: &mut Pin<Box<dyn Future<Output = T>>>) -> Option<T> {
+    let raw_waker = make_waker_vtable();
+    let waker = unsafe { Waker::from_raw(raw_waker) };
+    let mut context = Context::from_waker(&waker);
+
+    match future.as_mut().poll(&mut context) {
+        Poll::Ready(val) => Some(val),
+        Poll::Pending => None,
+    }
+}
+
 impl Koryto {
     pub fn new() -> Self {
         Self {
@@ -56,15 +67,19 @@ impl Koryto {
     }
 
     pub fn start(&mut self, co: impl Future<Output = ()> + 'static) {
-        self.coroutines.push(Coroutine {
+        let mut co = Coroutine {
             future: Box::pin(co),
-        });
+        };
+
+        if resume(&mut co.future).is_none() {
+            self.coroutines.push(co);
+        }
     }
 
     pub fn poll_coroutines(&mut self, _delta: f32) {
         let raw_waker = make_waker_vtable();
         let waker = unsafe { Waker::from_raw(raw_waker) };
-        let mut context = std::task::Context::from_waker(&waker);
+        let mut context = Context::from_waker(&waker);
 
         self.coroutines
             .retain_mut(|co| !co.future.as_mut().poll(&mut context).is_ready());
@@ -89,15 +104,16 @@ mod tests {
         let p: *const i32 = std::ptr::null();
 
         ko.start(async move {
+            println!("happy pointer 🐷 = {:?}", p);
+
             *val_inner.borrow_mut() += 2;
             yield_frame().await;
-            println!("happy pointer 🐷 = {:?}", p);
             *val_inner.borrow_mut() += 2;
         });
 
-        assert_eq!(*val.borrow(), 3);
-        ko.poll_coroutines(1.0);
         assert_eq!(*val.borrow(), 5);
+        ko.poll_coroutines(1.0);
+        assert_eq!(*val.borrow(), 7);
         ko.poll_coroutines(1.0);
         assert_eq!(*val.borrow(), 7);
     }
