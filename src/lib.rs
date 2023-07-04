@@ -1,7 +1,7 @@
 #![allow(clippy::new_without_default)]
 
 use core::future::Future;
-use std::{pin::Pin, task::{RawWaker, RawWakerVTable, Waker}};
+use std::{pin::Pin, task::{RawWaker, RawWakerVTable, Waker, Poll}};
 
 pub struct Coroutine {
     pub future: Pin<Box<dyn Future<Output = ()> + 'static>>
@@ -9,6 +9,27 @@ pub struct Coroutine {
 
 pub struct Koryto {
     pub coroutines: Vec<Coroutine>,
+}
+
+pub struct YieldFrameFuture {
+    pub ready: bool,
+}
+
+impl Future for YieldFrameFuture {
+    type Output = Option<()>;
+
+    fn poll(mut self: Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
+        if self.ready {
+            Poll::Ready(Some(()))
+        } else {
+            self.ready = true;
+            Poll::Pending
+        }
+    }
+}
+
+pub fn yield_frame() -> YieldFrameFuture {
+    YieldFrameFuture { ready: false }
 }
 
 fn make_waker_vtable() -> RawWaker {
@@ -51,18 +72,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let mut ko = Koryto::new();
+fn it_works() {
+    let mut ko = Koryto::new();
 
-        let val = Rc::new(RefCell::new(3));
-        let val_inner = val.clone();
+    let val = Rc::new(RefCell::new(3));
+    let val_inner = val.clone();
 
-        ko.start(async move {
-            *val_inner.borrow_mut() += 2;
-        });
+    ko.start(async move {
+        *val_inner.borrow_mut() += 2;
+        yield_frame().await;
+        *val_inner.borrow_mut() += 2;
+    });
 
-        assert_eq!(*val.borrow(), 3);
-        ko.poll_coroutines(1.0);
-        assert_eq!(*val.borrow(), 5);
-    }
+    assert_eq!(*val.borrow(), 3);
+    ko.poll_coroutines(1.0);
+    assert_eq!(*val.borrow(), 5);
+    ko.poll_coroutines(1.0);
+    assert_eq!(*val.borrow(), 7);
+}
 }
