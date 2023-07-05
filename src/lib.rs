@@ -2,15 +2,15 @@
 
 use core::future::Future;
 use std::{
-    cell::RefCell,
+    cell::Cell,
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
-use futures::future::FusedFuture;
 use thunderdome::{Arena, Index};
 
-pub use futures::{join, select};
+pub use futures;
+pub use futures::{future::FusedFuture, join, select};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Coroutine {
@@ -22,7 +22,7 @@ struct CoroutineState {
 }
 
 thread_local! {
-    static DELTA: RefCell<f32> = RefCell::new(0.0);
+    static DELTA: Cell<f32> = Cell::new(0.0);
 }
 
 pub struct TimeDelayFuture {
@@ -34,7 +34,7 @@ impl Future for TimeDelayFuture {
 
     fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
         DELTA.with(|delta| {
-            self.remaining -= *delta.borrow();
+            self.remaining -= delta.get();
 
             if self.remaining <= 0.0 {
                 Poll::Ready(Some(()))
@@ -160,7 +160,7 @@ impl Koryto {
 
     pub fn poll_coroutines(&mut self, delta: f32) {
         DELTA.with(|delta_cell| {
-            *delta_cell.borrow_mut() = delta;
+            delta_cell.set(delta);
         });
 
         self.coroutines
