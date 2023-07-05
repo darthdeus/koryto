@@ -80,7 +80,7 @@ fn make_waker_vtable() -> RawWaker {
     RawWaker::new(std::ptr::null(), &VTABLE)
 }
 
-fn resume<T>(future: &mut Pin<Box<dyn Future<Output = T>>>) -> Option<T> {
+fn poll<T>(future: &mut Pin<Box<dyn Future<Output = T>>>) -> Option<T> {
     let raw_waker = make_waker_vtable();
     let waker = unsafe { Waker::from_raw(raw_waker) };
     let mut context = Context::from_waker(&waker);
@@ -102,12 +102,29 @@ impl Koryto {
         }
     }
 
+    /// Spawns the coroutine but doesn't immediately poll. This is the default
+    /// behavior other Rust async executors.
     pub fn start(&mut self, future: impl Future<Output = ()> + 'static) -> Coroutine {
+        self.start_internal(future, false)
+    }
+
+    /// Spawns the coroutine and immediately polls it before returning.
+    pub fn start_and_poll(&mut self, future: impl Future<Output = ()> + 'static) -> Coroutine {
+        self.start_internal(future, true)
+    }
+
+    fn start_internal(
+        &mut self,
+        future: impl Future<Output = ()> + 'static,
+        immediately_resume: bool,
+    ) -> Coroutine {
         let mut state = CoroutineState {
             future: Box::pin(future),
         };
 
-        resume(&mut state.future);
+        if immediately_resume {
+            poll(&mut state.future);
+        }
 
         Coroutine {
             id: self.coroutines.insert(state),
@@ -124,6 +141,6 @@ impl Koryto {
         });
 
         self.coroutines
-            .retain(|_, co| resume(&mut co.future).is_none());
+            .retain(|_, co| poll(&mut co.future).is_none());
     }
 }
