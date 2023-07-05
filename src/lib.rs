@@ -7,7 +7,10 @@ use std::{
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
+use futures::future::FusedFuture;
 use thunderdome::{Arena, Index};
+
+pub use futures::{join, select};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Coroutine {
@@ -42,29 +45,41 @@ impl Future for TimeDelayFuture {
     }
 }
 
+impl FusedFuture for TimeDelayFuture {
+    fn is_terminated(&self) -> bool {
+        false
+    }
+}
+
 pub fn wait_seconds(seconds: f32) -> TimeDelayFuture {
     TimeDelayFuture { remaining: seconds }
 }
 
 pub struct FrameFuture {
-    pub ready: bool,
+    pub is_done: bool,
 }
 
 impl Future for FrameFuture {
     type Output = Option<()>;
 
     fn poll(mut self: Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
-        if self.ready {
+        if self.is_done {
             Poll::Ready(Some(()))
         } else {
-            self.ready = true;
+            self.is_done = true;
             Poll::Pending
         }
     }
 }
 
+impl FusedFuture for FrameFuture {
+    fn is_terminated(&self) -> bool {
+        false
+    }
+}
+
 pub fn yield_frame() -> FrameFuture {
-    FrameFuture { ready: false }
+    FrameFuture { is_done: false }
 }
 
 fn make_waker_vtable() -> RawWaker {

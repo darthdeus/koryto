@@ -170,3 +170,33 @@ fn coroutine_cleanup_early_return_test() {
     ko.poll_coroutines(0.0);
     assert_eq!(ko.active_coroutines(), 0);
 }
+
+#[test]
+fn select_test() {
+    let mut ko = Koryto::new();
+
+    let val = Rc::new(RefCell::new(0));
+    let val_inner = val.clone();
+
+    ko.start(async move {
+        select! {
+            _ = wait_seconds(0.5) => {
+                *val_inner.borrow_mut() = 1;
+            }
+            _ = yield_frame() => {
+                *val_inner.borrow_mut() = 2;
+            }
+        }
+    });
+
+    assert_eq!(*val.borrow(), 0);
+
+    ko.poll_coroutines(0.2);
+    assert_eq!(*val.borrow(), 0);
+
+    ko.poll_coroutines(0.2);
+    assert_eq!(*val.borrow(), 2);
+
+    ko.poll_coroutines(0.2);
+    assert_eq!(*val.borrow(), 2);
+}
