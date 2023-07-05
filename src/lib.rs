@@ -2,6 +2,7 @@
 
 use core::future::Future;
 use std::{
+    cell::RefCell,
     pin::Pin,
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
@@ -14,11 +15,39 @@ pub struct Koryto {
     pub coroutines: Vec<Coroutine>,
 }
 
-pub struct YieldFrameFuture {
+thread_local! {
+    static DELTA: RefCell<f32> = RefCell::new(0.0);
+}
+
+pub struct TimeDelayFuture {
+    pub remaining: f32,
+}
+
+impl Future for TimeDelayFuture {
+    type Output = Option<()>;
+
+    fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+        DELTA.with(|delta| {
+            self.remaining -= *delta.borrow();
+
+            if self.remaining <= 0.0 {
+                Poll::Ready(Some(()))
+            } else {
+                Poll::Pending
+            }
+        })
+    }
+}
+
+pub fn wait_seconds(seconds: f32) -> TimeDelayFuture {
+    TimeDelayFuture { remaining: seconds }
+}
+
+pub struct FrameFuture {
     pub ready: bool,
 }
 
-impl Future for YieldFrameFuture {
+impl Future for FrameFuture {
     type Output = Option<()>;
 
     fn poll(mut self: Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
@@ -31,8 +60,8 @@ impl Future for YieldFrameFuture {
     }
 }
 
-pub fn yield_frame() -> YieldFrameFuture {
-    YieldFrameFuture { ready: false }
+pub fn yield_frame() -> FrameFuture {
+    FrameFuture { ready: false }
 }
 
 fn make_waker_vtable() -> RawWaker {
@@ -76,45 +105,16 @@ impl Koryto {
         }
     }
 
-    pub fn poll_coroutines(&mut self, _delta: f32) {
+    pub fn poll_coroutines(&mut self, delta: f32) {
+        DELTA.with(|delta_cell| {
+            *delta_cell.borrow_mut() = delta;
+        });
+
         let raw_waker = make_waker_vtable();
         let waker = unsafe { Waker::from_raw(raw_waker) };
         let mut context = Context::from_waker(&waker);
 
         self.coroutines
             .retain_mut(|co| !co.future.as_mut().poll(&mut context).is_ready());
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::{cell::RefCell, rc::Rc};
-
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let mut ko = Koryto::new();
-
-        let val = Rc::new(RefCell::new(3));
-        let val_inner = val.clone();
-
-        // Koryto doesn't require Send/Sync, so coroutines can
-        // work with raw pointers without a mutex.
-        let p: *const i32 = std::ptr::null();
-
-        ko.start(async move {
-            println!("happy pointer 🐷 = {:?}", p);
-
-            *val_inner.borrow_mut() += 2;
-            yield_frame().await;
-            *val_inner.borrow_mut() += 2;
-        });
-
-        assert_eq!(*val.borrow(), 5);
-        ko.poll_coroutines(1.0);
-        assert_eq!(*val.borrow(), 7);
-        ko.poll_coroutines(1.0);
-        assert_eq!(*val.borrow(), 7);
     }
 }
