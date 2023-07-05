@@ -7,12 +7,15 @@ use std::{
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
+use thunderdome::{Arena, Index};
+
+#[derive(Copy, Clone, Debug)]
 pub struct Coroutine {
-    pub future: Pin<Box<dyn Future<Output = ()> + 'static>>,
+    id: Index,
 }
 
-pub struct Koryto {
-    pub coroutines: Vec<Coroutine>,
+struct CoroutineState {
+    pub future: Pin<Box<dyn Future<Output = ()> + 'static>>,
 }
 
 thread_local! {
@@ -88,21 +91,31 @@ fn resume<T>(future: &mut Pin<Box<dyn Future<Output = T>>>) -> Option<T> {
     }
 }
 
+pub struct Koryto {
+    coroutines: Arena<CoroutineState>,
+}
+
 impl Koryto {
     pub fn new() -> Self {
         Self {
-            coroutines: Vec::new(),
+            coroutines: Arena::new(),
         }
     }
 
-    pub fn start(&mut self, co: impl Future<Output = ()> + 'static) {
-        let mut co = Coroutine {
-            future: Box::pin(co),
+    pub fn start(&mut self, future: impl Future<Output = ()> + 'static) -> Coroutine {
+        let mut state = CoroutineState {
+            future: Box::pin(future),
         };
 
-        if resume(&mut co.future).is_none() {
-            self.coroutines.push(co);
+        resume(&mut state.future);
+
+        Coroutine {
+            id: self.coroutines.insert(state),
         }
+    }
+
+    pub fn stop(&mut self, coroutine: Coroutine) {
+        self.coroutines.remove(coroutine.id);
     }
 
     pub fn poll_coroutines(&mut self, delta: f32) {
@@ -110,11 +123,7 @@ impl Koryto {
             *delta_cell.borrow_mut() = delta;
         });
 
-        let raw_waker = make_waker_vtable();
-        let waker = unsafe { Waker::from_raw(raw_waker) };
-        let mut context = Context::from_waker(&waker);
-
         self.coroutines
-            .retain_mut(|co| !co.future.as_mut().poll(&mut context).is_ready());
+            .retain(|_, co| resume(&mut co.future).is_none());
     }
 }

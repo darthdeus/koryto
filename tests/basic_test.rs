@@ -69,3 +69,31 @@ fn wait_seconds_test() {
     ko.poll_coroutines(dt);
     assert_eq!(*val.borrow(), 9);
 }
+
+#[test]
+fn stop_coroutine_test() {
+    let mut ko = Koryto::new();
+
+    let val = Rc::new(RefCell::new(3));
+    let val_inner = val.clone();
+
+    assert_eq!(*val.borrow(), 3);
+
+    let coroutine = ko.start(async move {
+        // Unlike Rust's futures, coroutines resume immediately on .start
+        *val_inner.borrow_mut() = 5;
+
+        yield_frame().await;
+
+        *val_inner.borrow_mut() = 7;
+    });
+
+    assert_eq!(*val.borrow(), 5);
+
+    ko.stop(coroutine);
+
+    ko.poll_coroutines(0.0);
+    assert_eq!(*val.borrow(), 5);
+    ko.poll_coroutines(0.0);
+    assert_eq!(*val.borrow(), 5);
+}
