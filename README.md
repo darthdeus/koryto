@@ -58,20 +58,29 @@ assert_eq!(*val.borrow(), 9);
 
 No.
 
+### Does it work?
+
+Yes, probably ... [we have tests](https://github.com/darthdeus/koryto/blob/master/tests/basic_test.rs).
+
+The source code should be simple enough for anyone to read and understand.
+There's no 100 000 lines of code like in tokio. Currently `koryto` does
+depend on `futures` in order to implement the `select!/join!` combinators.
+
 ### Why not just use `cosync` when this does exactly the same thing?
 
-While [`cosync`](https://docs.rs/cosync/latest/cosync/) does work its API is a little more flexible than feels
-convenient for games. [Macroquad's
-coroutines](https://docs.rs/macroquad/latest/macroquad/experimental/coroutines/index.html)
-are more closely aligned with the philosophy of this crate. If you like
-`cosync`, keep using it!
+Unlike [`cosync`](https://docs.rs/cosync/latest/cosync/), `koryto` assumes your application is single threadd,
+which means your futures don't need to be `Send`.
 
-One benefit of `koryto` over `cosync` is that it does not assume coroutines are `Sync`.
+This allows you to use `Rc` for shared state, and also just pass around pointers
+into the futures without any wrappers.
+
+`koryto` is also a bit simpler in its API and closer to [Macroquad's
+coroutines](https://docs.rs/macroquad/latest/macroquad/experimental/coroutines/index.html),
+although macroquad's futures also need to be `Send`.
 
 ## License
 
 `koryto` is dual licensed:
 
-* MIT License ([LICENSE-MIT](LICENSE-MIT) or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
-* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0))
-
+- MIT License ([LICENSE-MIT](LICENSE-MIT) or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0))
