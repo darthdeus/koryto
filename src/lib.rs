@@ -131,6 +131,10 @@ impl Koryto {
         }
     }
 
+    pub fn active_coroutines(&self) -> usize {
+        self.coroutines.len()
+    }
+
     pub fn stop(&mut self, coroutine: Coroutine) {
         self.coroutines.remove(coroutine.id);
     }

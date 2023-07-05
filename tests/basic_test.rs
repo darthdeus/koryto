@@ -128,3 +128,45 @@ fn stop_coroutine_test() {
     ko.poll_coroutines(0.0);
     assert_eq!(*val.borrow(), 5);
 }
+
+#[test]
+fn coroutine_cleanup_test() {
+    let mut ko = Koryto::new();
+
+    ko.start(async move {
+        yield_frame().await;
+    });
+
+    assert_eq!(ko.active_coroutines(), 1);
+
+    ko.poll_coroutines(0.0);
+    assert_eq!(ko.active_coroutines(), 1);
+
+    ko.poll_coroutines(0.0);
+    assert_eq!(ko.active_coroutines(), 0);
+}
+
+#[test]
+fn coroutine_cleanup_early_return_test() {
+    let mut ko = Koryto::new();
+
+    let val = Rc::new(RefCell::new(false));
+    let val_inner = val.clone();
+
+    ko.start(async move {
+        if *val_inner.borrow() {
+            return;
+        }
+
+        yield_frame().await;
+    });
+
+    *val.borrow_mut() = true;
+    assert_eq!(ko.active_coroutines(), 1);
+
+    ko.poll_coroutines(0.0);
+    assert_eq!(ko.active_coroutines(), 0);
+
+    ko.poll_coroutines(0.0);
+    assert_eq!(ko.active_coroutines(), 0);
+}
