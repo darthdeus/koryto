@@ -1,5 +1,10 @@
 # 🐷 Koryto 🐷
 
+[![Crates.io](https://img.shields.io/crates/v/koryto.svg)](https://crates.io/crates/koryto)
+[![Documentation](https://docs.rs/koryto/badge.svg)](https://docs.rs/koryto)
+[![Build Status](https://github.com/darthdeus/koryto/actions/workflows/build.yaml/badge.svg)](https://github.com/darthdeus/koryto/actions)
+[![License](https://img.shields.io/crates/l/koryto.svg)](https://github.com/darthdeus/koryto/blob/main/LICENSE)
+
 > Pronounced like _corrito_, which is pronounced as if you combined _coroutine_ and _burrito_, because everyone knows coroutines are [burritos](https://blog.plover.com/prog/burritos.html) in the category of endofunctors.
 
 Game loop focused async executor for all your coroutine needs. Inspired by [macroquad's experimental coroutines](https://docs.rs/macroquad/latest/macroquad/experimental/coroutines/), [the cosync crate](https://docs.rs/cosync/latest/cosync/), [Unity's amazing coroutines](https://docs.unity3d.com/ScriptReference/MonoBehaviour.StartCoroutine.html), and lastly [Godot's coroutines](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_basics.html#awaiting-for-signals-or-coroutines) which for a while [weren't true burritos](https://github.com/godotengine/godot/issues/24311).
@@ -25,3 +30,11 @@ are more closely aligned with the philosophy of this crate. If you like
 `cosync`, keep using it!
 
 One benefit of `koryto` over `cosync` is that it does not assume coroutines are `Sync`.
+
+## License
+
+`koryto` is dual licensed:
+
+* MIT License ([LICENSE-MIT](LICENSE-MIT) or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0))
+
