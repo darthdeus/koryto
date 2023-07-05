@@ -54,12 +54,18 @@ fn wait_seconds_test() {
         *val_inner.borrow_mut() = 9
     });
 
-    ko.poll_coroutines(0.0);
+    // Delta time obtained from the game loop
+    let dt = 0.2;
+
+    ko.poll_coroutines(dt);
     assert_eq!(*val.borrow(), 3);
 
-    ko.poll_coroutines(0.2);
+    ko.poll_coroutines(dt);
     assert_eq!(*val.borrow(), 3);
 
-    ko.poll_coroutines(0.4);
+    ko.poll_coroutines(dt);
+    assert_eq!(*val.borrow(), 9);
+
+    ko.poll_coroutines(dt);
     assert_eq!(*val.borrow(), 9);
 }
