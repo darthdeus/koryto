@@ -71,8 +71,12 @@ fn make_waker_vtable() -> RawWaker {
     unsafe fn clone(data: *const ()) -> RawWaker {
         RawWaker::new(data, &VTABLE)
     }
-    unsafe fn wake(_data: *const ()) {}
-    unsafe fn wake_by_ref(_data: *const ()) {}
+    unsafe fn wake(_data: *const ()) {
+        panic!("wake is not supported");
+    }
+    unsafe fn wake_by_ref(_data: *const ()) {
+        panic!("wake_by_ref is not supported");
+    }
     unsafe fn drop(_data: *const ()) {}
 
     static VTABLE: RawWakerVTable = RawWakerVTable::new(clone, wake, wake_by_ref, drop);
