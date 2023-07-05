@@ -15,6 +15,43 @@ Game loop focused async executor for all your coroutine needs. Inspired by [macr
 
 Koryto is single threaded and simple. The executor context `Koryto` expects to be polled every frame with the game's _delta time_.
 
+## Example
+
+```rust
+// Create a new instance of the executor
+let mut ko = Koryto::new();
+
+// Shared state the coroutine sets
+let val = Rc::new(RefCell::new(3));
+let val_inner = val.clone();
+
+// Start a new coroutine
+ko.start(async move {
+    wait_seconds(0.5).await;
+
+    *val_inner.borrow_mut() = 9
+});
+
+// Delta time obtained from the game loop
+let dt = 0.2;
+
+// Poll coroutines as part of the game loop
+ko.poll_coroutines(dt);
+assert_eq!(*val.borrow(), 3);
+
+ko.poll_coroutines(dt);
+assert_eq!(*val.borrow(), 3);
+
+// At this point 0.5 seconds have passed and we observe the coroutine be
+// resumed and set the value.
+ko.poll_coroutines(dt);
+assert_eq!(*val.borrow(), 9);
+
+ko.poll_coroutines(dt);
+assert_eq!(*val.borrow(), 9);
+
+```
+
 ## FAQ
 
 ### Is this stable?
