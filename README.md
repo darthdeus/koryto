@@ -68,7 +68,7 @@ depend on `futures` in order to implement the `select!/join!` combinators.
 
 ### Why not just use `cosync` when this does exactly the same thing?
 
-Unlike [`cosync`](https://docs.rs/cosync/latest/cosync/), `koryto` assumes your application is single threadd,
+Unlike [`cosync`](https://docs.rs/cosync/latest/cosync/), `koryto` assumes your application is single thread,
 which means your futures don't need to be `Send`.
 
 This allows you to use `Rc` for shared state, and also just pass around pointers
