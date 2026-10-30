@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/koryto.svg)](https://crates.io/crates/koryto)
 [![Documentation](https://docs.rs/koryto/badge.svg)](https://docs.rs/koryto)
 [![Build Status](https://github.com/darthdeus/koryto/actions/workflows/build.yaml/badge.svg)](https://github.com/darthdeus/koryto/actions)
-[![License](https://img.shields.io/crates/l/koryto.svg)](https://github.com/darthdeus/koryto/blob/main/LICENSE)
+[![License](https://img.shields.io/crates/l/koryto.svg)](https://github.com/darthdeus/koryto/blob/master/LICENSE-MIT)
 
 > Pronounced like _corrito_, which is pronounced as if you combined _coroutine_ and _burrito_, because everyone knows coroutines are [burritos](https://blog.plover.com/prog/burritos.html) in the category of endofunctors.
 
