@@ -1,6 +1,6 @@
 [package]
 name = "koryto"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "🎮 game loop + 🐷 coroutine + 🌯 burrito = 🚀🔥 blazingly synchronous async executor for games 🔥🚀"
 license = "MIT OR Apache-2.0"
